@@ -449,18 +449,18 @@ function Find-MS16032 {
         $VersionInfo = $VersionInfo.Split(".")
 
         # Get the Build and Revision
-        $Build = $VersionInfo[2]
+        $Build = [int]$VersionInfo[2]
         $Revision = $VersionInfo[3].Split(" ")[0] # Drop the junk
 
         # Decide which versions are vulnerable
         switch ( $Build ) {
-
-            7600 { if ( $Revision -ge "16000" ) { $VulnStatus = "Appears Vulnerable" } }
-            7601 { if ( $Revision -le "23348" ) { $VulnStatus = "Appears Vulnerable" } }
-            9200 { if ( $Revision -le "21768" ) { $VulnStatus = "Appears Vulnerable" } }
-            9600 { if ( $Revision -le "18230" ) { $VulnStatus = "Appears Vulnerable" } }
-            10240 { if ( $Revision -le "16724" ) { $VulnStatus = "Appears Vulnerable" } }
-            10586 { if ( $Revision -le "162" ) { $VulnStatus = "Appears Vulnerable" } }
+            6002 { if ( ( $Revision -In 23000..23909 ) -Or ( $Revison -lt 19598 ) ) { $VulnStatus = "Appears Vulnerable" } } # Confirmed for Windows 2008
+            7600 { if ( $Revision -ge 16000 ) { $VulnStatus = "Appears Vulnerable" } } # Not sure about 7 RTM
+            7601 { if ( ( $Revision -In 23000..23347 ) -Or ( $Revison -lt 19148 ) ) { $VulnStatus = "Appears Vulnerable" } } # Confirmed for Windows 7 and 2008R2
+            9200 { if ( ( $Revision -In 21000..21767 ) -Or ( $Revison -lt 17649 ) ) { $VulnStatus = "Appears Vulnerable" } } # Confirmed for Windows 2012
+            9600 { if ( $Revison -lt 18230 ) { $VulnStatus = "Appears Vulnerable" } } # Confirmed for Windows 8.1 and 2012R2
+            10240 { if ( $Revision -lt 16724 ) { $VulnStatus = "Appears Vulnerable" } } # Confirmed for Windows 10
+            10586 { if ( $Revision -le 161 ) { $VulnStatus = "Appears Vulnerable" } } # Confirmed for Windows 10 1151
             default { $VulnStatus = "Not Vulnerable" }
 
         }
