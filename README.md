@@ -1,6 +1,6 @@
 # Sherlock
 
-PowerShell script to quickly find missing Microsoft patches for local privilege escalation vulnerabilities.
+PowerShell script to quickly find missing software patches for local privilege escalation vulnerabilities.
 
 ## Currently looks for:
 
