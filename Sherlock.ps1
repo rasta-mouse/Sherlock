@@ -17,6 +17,16 @@ function Get-FileVersionInfo ($FilePath) {
 
 }
 
+function Get-InstalledSoftware($SoftwareName) {
+
+    $SoftwareVersion = Get-WmiObject -Class Win32_Product | Where { $_.Name -eq $SoftwareName } | Select-Object Version
+    $SoftwareVersion = $SoftwareVersion.Version  # I have no idea what I'm doing
+    
+    return $SoftwareVersion
+
+}
+
+
 function Get-Architecture {
 
     # This is the CPU architecture.  Returns "64-bit" or "32-bit".
@@ -57,16 +67,33 @@ function New-ExploitTable {
     # MS16
     $Global:ExploitTable.Rows.Add("'mrxdav.sys' WebDAV","MS16-016","2016-0051","https://www.exploit-db.com/exploits/40085/")
     $Global:ExploitTable.Rows.Add("Secondary Logon Handle","MS16-032","2016-0099","https://www.exploit-db.com/exploits/39719/")
+    # Miscs that aren't MS
+    $Global:ExploitTable.Rows.Add("Nessus Agent 6.6.2 - 6.10.3","N/A","2017-7199","https://aspe1337.blogspot.co.uk/2017/04/writeup-of-cve-2017-7199.html")
 
 }
 
 function Set-ExploitTable ($MSBulletin, $VulnStatus) {
 
-    $Global:ExploitTable | Where { $_.MSBulletin -eq $MSBulletin
+    if ( $MSBulletin -like "MS*" ) {
 
-    } | ForEach-Object {
+        $Global:ExploitTable | Where { $_.MSBulletin -eq $MSBulletin
 
-        $_.VulnStatus = $VulnStatus
+        } | ForEach-Object {
+
+            $_.VulnStatus = $VulnStatus
+
+        }
+
+    } else {
+
+
+    $Global:ExploitTable | Where { $_.CVEID -eq $MSBulletin
+
+        } | ForEach-Object {
+
+            $_.VulnStatus = $VulnStatus
+
+        }
 
     }
 
@@ -95,6 +122,7 @@ function Find-AllVulns {
         Find-MS15078
         Find-MS16016
         Find-MS16032
+        Find-CVE20177199
 
         Get-Results
 
@@ -431,6 +459,7 @@ function Find-MS16016 {
 }
 
 function Find-MS16032 {
+
     # Set the MS Bulletin
     $MSBulletin = "MS16-032"
 
@@ -471,5 +500,42 @@ function Find-MS16032 {
 
     # Update the Exploit Table
     Set-ExploitTable $MSBulletin $VulnStatus
+
+}
+
+function Find-CVE20177199 {
+
+    # Set the CVE ID
+    $CVEID = "2017-7199"
+
+    # See if it's intalled and get the version
+    $SoftwareVersion = Get-InstalledSoftware "Nessus Agent"
+    
+    if ( !$SoftwareVersion ) {
+
+        $VulnStatus = "Not Vulnerable"
+
+    } else {
+
+        # Split
+        $SoftwareVersion = $SoftwareVersion.Split(".")
+
+        # Get the build parts
+        $Major = [int]$SoftwareVersion[0]
+        $Minor = [int]$SoftwareVersion[1]
+        $Build = [int]$SoftwareVersion[2]
+
+        # Decide which versions are vuln
+        switch( $Major ) {
+
+        6 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Minor -eq 10 -and $Build -le 3 -Or ( $Minor -eq 6 -and $Build -le 2 ) -Or ( $Minor -le 9 -and $Minor -ge 7 ) ] } # 6.6.2 - 6.10.3
+        default { $VulnStatus = "Not Vulnerable" }
+
+        }
+
+    }
+
+    # Update the Exploit Table
+    Set-ExploitTable $CVEID $VulnStatus
 
 }
