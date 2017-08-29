@@ -67,6 +67,7 @@ function New-ExploitTable {
     # MS16
     $Global:ExploitTable.Rows.Add("'mrxdav.sys' WebDAV","MS16-016","2016-0051","https://www.exploit-db.com/exploits/40085/")
     $Global:ExploitTable.Rows.Add("Secondary Logon Handle","MS16-032","2016-0099","https://www.exploit-db.com/exploits/39719/")
+    $Global:ExploitTable.Rows.Add("Win32k Elevation of Privilege","MS16-135","2016-7255","https://github.com/FuzzySecurity/PSKernel-Primitives/tree/master/Sample-Exploits/MS16-135")
     # Miscs that aren't MS
     $Global:ExploitTable.Rows.Add("Nessus Agent 6.6.2 - 6.10.3","N/A","2017-7199","https://aspe1337.blogspot.co.uk/2017/04/writeup-of-cve-2017-7199.html")
 
@@ -122,6 +123,7 @@ function Find-AllVulns {
         Find-MS15078
         Find-MS16016
         Find-MS16032
+        Find-MS16135
         Find-CVE20177199
 
         Get-Results
@@ -537,5 +539,49 @@ function Find-CVE20177199 {
 
     # Update the Exploit Table
     Set-ExploitTable $CVEID $VulnStatus
+
+}
+
+function Find-MS16135 {
+
+    # Set the MS Bulletin
+    $MSBulletin = "MS16-135"
+
+    # Check the system architecture
+    $Architecture = Get-Architecture
+
+    # If running on 64-bit system, check the process architecture to ensure it's also 64-bit.
+    if ( $Architecture[1] -eq "AMD64" -or $Architecture[0] -eq "32-bit" ) {
+
+        # Get the file version info for 'win32k.sys'
+        $Path = $env:windir + "\system32\win32k.sys"
+        $VersionInfo = Get-FileVersionInfo($Path)
+        
+        # Split the string into parts
+        $VersionInfo = $VersionInfo.Split(".")
+        
+
+        # Get the Build and Revision
+        $Build = [int]$VersionInfo[2]
+        $Revision = [int]$VersionInfo[3].Split(" ")[0] # Drop the junk
+
+        # Decide which versions are vulnerable
+        switch ( $Build ) {
+            9600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 18524 ] }
+            10240 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 16384 ] }
+            10586 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 19 ] }
+            14393 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 446 ] }
+            default { $VulnStatus = "Not Vulnerable" } # If no match
+
+        }
+
+    } ElseIf ( $Architecture[0] -eq "64-bit" -and $Architecture[1] -eq "x86" ) {
+
+        $VulnStatus = "Migrate to a 64-bit process to avoid WOW64 Filesystem Redirection shenanigans"
+
+    }
+
+    # Update the Exploit Table
+    Set-ExploitTable $MSBulletin $VulnStatus
 
 }
