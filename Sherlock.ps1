@@ -26,7 +26,6 @@ function Get-InstalledSoftware($SoftwareName) {
 
 }
 
-
 function Get-Architecture {
 
     # This is the CPU architecture.  Returns "64-bit" or "32-bit".
@@ -428,7 +427,6 @@ function Find-MS16032 {
 function Find-CVE20177199 {
 
     $CVEID = "2017-7199"
-
     $SoftwareVersion = Get-InstalledSoftware "Nessus Agent"
     
     if ( !$SoftwareVersion ) {
