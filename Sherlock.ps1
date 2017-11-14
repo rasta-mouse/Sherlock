@@ -9,10 +9,11 @@
 $Global:ExploitTable = $null
 
 function Get-FileVersionInfo ($FilePath) {
-    
-    #Write-Host $FilePath
 
+    # Double slash for CIM_DataFile
     $FilePath = $FilePath.Replace("\", "\\")
+    
+    # PsH v1/v2 support via CIM_DataFile
     $VersionInfo = (Get-WmiObject -Class CIM_DataFile -Filter "Name='$FilePath'" | Select-Object Version).Version
     If( $VersionInfo ) {
 
@@ -20,6 +21,7 @@ function Get-FileVersionInfo ($FilePath) {
     
     } else {
     
+    # very ugly hack. just works lol
     return '0.0.0000.0 (nada.0-0)'
     
     } 
@@ -28,10 +30,10 @@ function Get-FileVersionInfo ($FilePath) {
 
 function Get-InstalledSoftware($SoftwareName) {
     
-    #Grab the PowerSherll version
+    # Grab the PowerSherll version
     $PshVersion = $host.version.Major
 
-    #If less or equal to 2, can not support Win32_Product Class then return false
+    # If less or equal to 2, can not support Win32_Product Class then return false
     if($PshVersion -le '2') {
 
     return $false 
