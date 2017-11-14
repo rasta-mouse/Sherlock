@@ -28,27 +28,18 @@ function Get-FileVersionInfo ($FilePath) {
 
 function Get-InstalledSoftware($SoftwareName) {
     
+    #Grab the PowerSherll version
     $PshVersion = $host.version.Major
 
+    #If less or equal to 2, can not support Win32_Product Class then return false
     if($PshVersion -le '2') {
- 
+
     return $false 
     
     } Else { 
-
-    $SoftwareVersion = Get-WmiObject win32_product | Where { $_.Name -eq $SoftwareName }
-        
-        $SoftwareVersion = $SoftwareVersion.Version  # I have no idea what I'm doing
-        
-        return $SoftwareVersion
-
-    }
-        
-    #if (Get-WmiObject -List -Namespace 'root\cimv2' | Where-Object { $_.Name -eq 'Win32_Product'}) {
- 
-    #$SoftwareVersion = Get-WmiObject -Class Win32_Product | Where { $_.Name -eq $SoftwareName } | Select-Object Version
-    $SoftwareVersion = Get-WmiObject win32_product | Where { $_.Name -eq $SoftwareName }
-
+    
+    $SoftwareVersion = Get-WmiObject -Class Win32_Product | Where { $_.Name -eq $SoftwareName } | Select-Object Version
+    
         if ( $SoftwareVersion) {
         
         $SoftwareVersion = $SoftwareVersion.Version  # I have no idea what I'm doing
@@ -60,7 +51,7 @@ function Get-InstalledSoftware($SoftwareName) {
         return $false
         
         }
-    #}
+    }
 
 }
 
