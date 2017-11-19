@@ -1,10 +1,10 @@
-﻿<#
-
-    File: Sherlock.ps1
-    Author: @_RastaMouse
-    License: GNU General Public License v3.0
-
-#>
+﻿#
+#
+#    File: Sherlock.ps1
+#    Author: @_RastaMouse
+#    License: GNU General Public License v3.0#
+#
+# 
 
 $Global:ExploitTable = $null
 
@@ -21,7 +21,7 @@ function Get-FileVersionInfo ($FilePath) {
     
     } else {
     
-    # very ugly hack. just works lol
+    # veery ugly hack, just works lol
     return '0.0.0000.0 (nada.0-0)'
     
     } 
@@ -30,10 +30,10 @@ function Get-FileVersionInfo ($FilePath) {
 
 function Get-InstalledSoftware($SoftwareName) {
     
-    # Grab the PowerSherll version
+    # Grab the PowerShell version
     $PshVersion = $host.version.Major
 
-    # If less or equal to 2, can not support Win32_Product Class then return false
+    # If version is less or equal to 2, can not support Win32_Product Class then return false
     if($PshVersion -le '2') {
 
     return $false 
