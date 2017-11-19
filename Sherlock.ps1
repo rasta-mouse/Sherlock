@@ -93,6 +93,7 @@ function New-ExploitTable {
     $Global:ExploitTable.Rows.Add("NTUserMessageCall Win32k Kernel Pool Overflow","MS13-053","2013-1300","https://www.exploit-db.com/exploits/33213/")
     $Global:ExploitTable.Rows.Add("TrackPopupMenuEx Win32k NULL Page","MS13-081","2013-3881","https://www.exploit-db.com/exploits/31576/")
     # MS14
+    $Global:ExploitTable.Rows.Add("ndproxy.sys Local Privilege Escalation","MS14-002","2013-5065","https://www.exploit-db.com/exploits/30014/")
     $Global:ExploitTable.Rows.Add("TrackPopupMenu Win32k Null Pointer Dereference","MS14-058","2014-4113","https://www.exploit-db.com/exploits/35101/")
     # MS15
     $Global:ExploitTable.Rows.Add("ClientCopyImage Win32k","MS15-051","2015-1701, 2015-2433","https://www.exploit-db.com/exploits/37367/")
@@ -153,6 +154,7 @@ function Find-AllVulns {
         Find-MS11080
         Find-MS13053
         Find-MS13081
+        Find-MS14002
         Find-MS14058
         Find-MS15051
         Find-MS15078
@@ -353,6 +355,38 @@ function Find-MS13081 {
             7600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -ge "18000" ] }
             7601 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "22435" ] }
             9200 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "20807" ] }
+            default { $VulnStatus = "Not Vulnerable" }
+
+        }
+
+    }
+
+    Set-ExploitTable $MSBulletin $VulnStatus
+
+}
+
+function Find-MS14002 {
+
+    $MSBulletin = "MS14-002"
+    $Architecture = Get-Architecture
+
+    if ( $Architecture[0] -eq "64-bit" ) {
+
+        $VulnStatus = "Not supported on 64-bit systems"
+
+    } Else {
+
+    $Path = $env:windir + "\system32\drivers\ndproxy.sys"
+    $VersionInfo = Get-FileVersionInfo($Path)
+    $VersionInfo = $VersionInfo.Split(".") 
+
+    $Build = $VersionInfo[2]
+    $Revision = $VersionInfo[3].Split(" ")[0]
+
+        switch ( $Build ) {
+
+            2600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "5512" ] } # WinXP SP3
+            3790 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -eq "4573" ] } # Win2k3 SP2
             default { $VulnStatus = "Not Vulnerable" }
 
         }
