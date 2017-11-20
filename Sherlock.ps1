@@ -38,11 +38,17 @@ function Get-Architecture {
 
 }
 
+function Get-Cores {
+  $cpu = Get-WmiObject –class Win32_processor 
+  $cores = Select-Object -InputObject $cpu -ExpandProperty NumberofCores
+  return $cores
+}
+
 function New-ExploitTable {
 
     # Create the table
     $Global:ExploitTable = New-Object System.Data.DataTable
-
+    
     # Create the columns
     $Global:ExploitTable.Columns.Add("Title")
     $Global:ExploitTable.Columns.Add("MSBulletin")
@@ -123,6 +129,7 @@ function Find-AllVulns {
         Find-MS16016
         Find-MS16032
         Find-MS16135
+        Find-CVE20178464
         Find-CVE20177199
 
         Get-Results
@@ -389,6 +396,12 @@ function Find-MS16032 {
 
     $MSBulletin = "MS16-032"
     $Architecture = Get-Architecture
+    $Cores = Get-Cores
+
+    If ($cores -lt 2) {
+
+        $VulnStatus = "Not supported on single-core systems"      
+    }
 
     if ( $Architecture[1] -eq "AMD64" -or $Architecture[0] -eq "32-bit" ) {
 
@@ -424,6 +437,36 @@ function Find-MS16032 {
 
 }
 
+function Find-CVE20178464 {
+
+    $CVEID = "2017-8464"
+
+    $Path = $env:windir + "\system32\user32.dll"
+    $VersionInfo = Get-FileVersionInfo($Path)
+    $VersionInfo = $VersionInfo.Split(".")
+        
+    $Build = [int]$VersionInfo[2]
+    $Revision = [int]$VersionInfo[3].Split(" ")[0]
+
+         switch ( $Build ) {
+            2900 { $VulnStatus = "Not Vulnerable" }
+            6000 { $VulnStatus = "Appears Vulnerable" }
+            6001 { $VulnStatus = "Appears Vulnerable" }
+            6002 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 24102 ] }
+            7601 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 23806 ] }
+            9200 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 20604 ] }
+            9600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 18692 ] }
+            10240 {$VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 17443 ] }
+            10586 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 962 ] }
+            14393 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 1356 ] }
+            15063 {$VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 413 ] }
+            default { $VulnStatus = "Unknown" }
+            }
+  
+    Set-ExploitTable $CVEID $VulnStatus
+
+}
+
 function Find-CVE20177199 {
 
     $CVEID = "2017-7199"
@@ -441,10 +484,14 @@ function Find-CVE20177199 {
         $Minor = [int]$SoftwareVersion[1]
         $Build = [int]$SoftwareVersion[2]
 
-        switch( $Major ) {
+        switch ( $Build ) {
 
-        6 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Minor -eq 10 -and $Build -le 3 -Or ( $Minor -eq 6 -and $Build -le 2 ) -Or ( $Minor -le 9 -and $Minor -ge 7 ) ] } # 6.6.2 - 6.10.3
-        default { $VulnStatus = "Not Vulnerable" }
+            7601 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 23584 ] }
+            9600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 18524 ] }
+            10240 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 16384 ] }
+            10586 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 19 ] }
+            14393 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 446 ] }
+            default { $VulnStatus = "Not Vulnerable" }
 
         }
 
