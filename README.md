@@ -17,6 +17,7 @@ PowerShell script to quickly find missing software patches for local privilege e
 * MS16-016 : 'mrxdav.sys' WebDAV
 * MS16-032 : Secondary Logon Handle
 * MS16-135 : Win32k Elevation of Privilege
+* CVE-2017-8464 : LNK Code Execution Vulnerability
 * CVE-2017-7199 : Nessus Agent 6.6.2 - 6.10.3 Priv Esc
 
 ## Basic Usage:
