@@ -1,10 +1,8 @@
 ﻿#
-#
 #    File: Sherlock.ps1
 #    Author: @_RastaMouse
 #    License: GNU General Public License v3.0#
 #
-# 
 
 $Global:ExploitTable = $null
 
