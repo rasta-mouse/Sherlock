@@ -6,8 +6,11 @@ PowerShell script to quickly find missing software patches for local privilege e
 
 * MS10-015 : User Mode to Ring (KiTrap0D)
 * MS10-092 : Task Scheduler
+* MS11-046 : 
+* MS11-080 : 
 * MS13-053 : NTUserMessageCall Win32k Kernel Pool Overflow
 * MS13-081 : TrackPopupMenuEx Win32k NULL Page
+* MS14-002 : 
 * MS14-058 : TrackPopupMenu Win32k Null Pointer Dereference
 * MS15-051 : ClientCopyImage Win32k
 * MS15-078 : Font Driver Buffer Overflow
