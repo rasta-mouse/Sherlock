@@ -316,9 +316,12 @@ function Find-MS13053 {
 
         $Build = $VersionInfo[2]
         $Revision = $VersionInfo[3].Split(" ")[0]
+                
+        #Write-Host($Revision)
 
         switch ( $Build ) {
 
+            2600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "5512" ] }
             7600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -ge "17000" ] }
             7601 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "22348" ] }
             9200 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "20732" ] }
