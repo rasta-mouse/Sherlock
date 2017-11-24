@@ -1,28 +1,57 @@
-﻿<#
-
-    File: Sherlock.ps1
-    Author: @_RastaMouse
-    License: GNU General Public License v3.0
-
-#>
+﻿#
+#    File: Sherlock.ps1
+#    Author: @_RastaMouse
+#    License: GNU General Public License v3.0#
+#
 
 $Global:ExploitTable = $null
 
 function Get-FileVersionInfo ($FilePath) {
 
-    $VersionInfo = (Get-Item $FilePath).VersionInfo
-    $FileVersion = ( "{0}.{1}.{2}.{3}" -f $VersionInfo.FileMajorPart, $VersionInfo.FileMinorPart, $VersionInfo.FileBuildPart, $VersionInfo.FilePrivatePart )
-        
-    return $FileVersion
+    # Double slash for CIM_DataFile
+    $FilePath = $FilePath.Replace("\", "\\")
+    
+    # PsH v1/v2 support via CIM_DataFile
+    $VersionInfo = (Get-WmiObject -Class CIM_DataFile -Filter "Name='$FilePath'" | Select-Object Version).Version
+    If( $VersionInfo ) {
 
+    return $VersionInfo
+    
+    } else {
+    
+    # veery ugly hack, just works lol
+    return '0.0.0000.0 (nada.0-0)'
+    
+    } 
+ 
 }
 
 function Get-InstalledSoftware($SoftwareName) {
-
-    $SoftwareVersion = Get-WmiObject -Class Win32_Product | Where { $_.Name -eq $SoftwareName } | Select-Object Version
-    $SoftwareVersion = $SoftwareVersion.Version  # I have no idea what I'm doing
     
-    return $SoftwareVersion
+    # Grab the PowerShell version
+    $PshVersion = $host.version.Major
+
+    # If version is less or equal to 2, can not support Win32_Product Class then return false
+    if($PshVersion -le '2') {
+
+    return $false 
+    
+    } Else { 
+    
+    $SoftwareVersion = Get-WmiObject -Class Win32_Product | Where { $_.Name -eq $SoftwareName } | Select-Object Version
+    
+        if ( $SoftwareVersion) {
+        
+        $SoftwareVersion = $SoftwareVersion.Version  # I have no idea what I'm doing
+        
+        return $SoftwareVersion
+        
+        } else { 
+        
+        return $false
+        
+        }
+    }
 
 }
 
@@ -55,10 +84,14 @@ function New-ExploitTable {
     # MS10
     $Global:ExploitTable.Rows.Add("User Mode to Ring (KiTrap0D)","MS10-015","2010-0232","https://www.exploit-db.com/exploits/11199/")
     $Global:ExploitTable.Rows.Add("Task Scheduler .XML","MS10-092","2010-3338, 2010-3888","https://www.exploit-db.com/exploits/19930/")
+    # MS11
+    $Global:ExploitTable.Rows.Add("AFD.sys Elevation of Privilege","MS11-046","2011-1249","https://www.exploit-db.com/exploits/40564/")
+    $Global:ExploitTable.Rows.Add("AFD.sys Elevation of Privilege","MS11-080","2011-2005","https://www.exploit-db.com/exploits/18176/")
     # MS13
     $Global:ExploitTable.Rows.Add("NTUserMessageCall Win32k Kernel Pool Overflow","MS13-053","2013-1300","https://www.exploit-db.com/exploits/33213/")
     $Global:ExploitTable.Rows.Add("TrackPopupMenuEx Win32k NULL Page","MS13-081","2013-3881","https://www.exploit-db.com/exploits/31576/")
     # MS14
+    $Global:ExploitTable.Rows.Add("ndproxy.sys Local Privilege Escalation","MS14-002","2013-5065","https://www.exploit-db.com/exploits/30014/")
     $Global:ExploitTable.Rows.Add("TrackPopupMenu Win32k Null Pointer Dereference","MS14-058","2014-4113","https://www.exploit-db.com/exploits/35101/")
     # MS15
     $Global:ExploitTable.Rows.Add("ClientCopyImage Win32k","MS15-051","2015-1701, 2015-2433","https://www.exploit-db.com/exploits/37367/")
@@ -115,8 +148,11 @@ function Find-AllVulns {
 
         Find-MS10015
         Find-MS10092
+        Find-MS11046
+        Find-MS11080
         Find-MS13053
         Find-MS13081
+        Find-MS14002
         Find-MS14058
         Find-MS15051
         Find-MS15078
@@ -173,6 +209,10 @@ function Find-MS10092 {
 
         $Path = $env:windir + "\sysnative\schedsvc.dll"
 
+    } ElseIf ( $Architecture[1] -eq "x86" ) {
+
+        $Path = $env:windir + "\system32\win32k.sys"
+
     }
 
         $VersionInfo = Get-FileVersionInfo($Path)
@@ -192,6 +232,71 @@ function Find-MS10092 {
 
 }
 
+function Find-MS11046 {
+
+    $MSBulletin = "MS11-046"
+    $Architecture = Get-Architecture
+
+    if ( $Architecture[0] -eq "64-bit" ) {
+
+        $VulnStatus = "Not supported on 64-bit systems"
+
+    } Else {
+
+    $Path = $env:windir + "\system32\drivers\afd.sys"
+    $VersionInfo = Get-FileVersionInfo($Path)
+    $VersionInfo = $VersionInfo.Split(".") 
+
+    $Build = $VersionInfo[2]
+    $Revision = $VersionInfo[3].Split(" ")[0]
+
+        switch ( $Build ) {
+
+            2600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "6081" ] } # WinXP SP3
+            3790 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "3959" ] } # Win2k3 SP1
+            6002 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "18005" ] } # Win2k8 SP2
+            7601 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "21712" ] } # Win7 SP1
+            default { $VulnStatus = "Not Vulnerable" }
+
+        }
+
+    }
+
+    Set-ExploitTable $MSBulletin $VulnStatus
+
+}
+
+function Find-MS11080 {
+
+    $MSBulletin = "MS11-080"
+    $Architecture = Get-Architecture
+
+    if ( $Architecture[0] -eq "64-bit" ) {
+
+        $VulnStatus = "Not supported on 64-bit systems"
+
+    } Else {
+
+    $Path = $env:windir + "\system32\drivers\afd.sys"
+    $VersionInfo = Get-FileVersionInfo($Path)
+    $VersionInfo = $VersionInfo.Split(".") 
+
+    $Build = $VersionInfo[2]
+    $Revision = $VersionInfo[3].Split(" ")[0]
+
+        switch ( $Build ) {
+
+            2600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt "6142" ] }
+            3790 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt "4898" ] }
+            default { $VulnStatus = "Not Vulnerable" }
+
+        }
+
+    }
+
+    Set-ExploitTable $MSBulletin $VulnStatus
+
+}
 function Find-MS13053 {
 
     $MSBulletin = "MS13-053"
@@ -209,9 +314,12 @@ function Find-MS13053 {
 
         $Build = $VersionInfo[2]
         $Revision = $VersionInfo[3].Split(" ")[0]
+                
+        #Write-Host($Revision)
 
         switch ( $Build ) {
 
+            2600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "5512" ] }
             7600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -ge "17000" ] }
             7601 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "22348" ] }
             9200 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "20732" ] }
@@ -258,6 +366,38 @@ function Find-MS13081 {
 
 }
 
+function Find-MS14002 {
+
+    $MSBulletin = "MS14-002"
+    $Architecture = Get-Architecture
+
+    if ( $Architecture[0] -eq "64-bit" ) {
+
+        $VulnStatus = "Not supported on 64-bit systems"
+
+    } Else {
+
+    $Path = $env:windir + "\system32\drivers\ndproxy.sys"
+    $VersionInfo = Get-FileVersionInfo($Path)
+    $VersionInfo = $VersionInfo.Split(".") 
+
+    $Build = $VersionInfo[2]
+    $Revision = $VersionInfo[3].Split(" ")[0]
+
+        switch ( $Build ) {
+
+            2600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le "5512" ] } # WinXP SP3
+            3790 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -eq "4573" ] } # Win2k3 SP2
+            default { $VulnStatus = "Not Vulnerable" }
+
+        }
+
+    }
+
+    Set-ExploitTable $MSBulletin $VulnStatus
+
+}
+
 function Find-MS14058 {
 
     $MSBulletin = "MS14-058"
@@ -271,8 +411,12 @@ function Find-MS14058 {
 
         $Path = $env:windir + "\sysnative\win32k.sys"
 
-    }
+    } ElseIf ( $Architecture[1] -eq "x86" ) {
 
+        $Path = $env:windir + "\system32\win32k.sys"
+
+    }
+     
         $VersionInfo = Get-FileVersionInfo($Path)
         $VersionInfo = $VersionInfo.Split(".")
 
@@ -305,6 +449,10 @@ function Find-MS15051 {
     } ElseIf ( $Architecture[0] -eq "64-bit" -and $Architecture[1] -eq "x86" ) {
 
         $Path = $env:windir + "\sysnative\win32k.sys"
+
+    } ElseIf ( $Architecture[1] -eq "x86" ) {
+
+        $Path = $env:windir + "\system32\win32k.sys"
 
     }
 
@@ -398,6 +546,10 @@ function Find-MS16032 {
 
         $Path = $env:windir + "\sysnative\seclogon.dll"
 
+    } ElseIf ( $Architecture[1] -eq "x86" ) {
+
+        $Path = $env:windir + "\system32\seclogon.dll"
+
     } 
 
         $VersionInfo = Get-FileVersionInfo($Path)
@@ -466,6 +618,10 @@ function Find-MS16135 {
     } ElseIf ( $Architecture[0] -eq "64-bit" -and $Architecture[1] -eq "x86" ) {
 
         $Path = $env:windir + "\sysnative\win32k.sys"
+
+    } ElseIf ( $Architecture[1] -eq "x86" ) {
+
+        $Path = $env:windir + "\system32\win32k.sys"
 
     }
 
