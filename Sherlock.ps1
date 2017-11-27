@@ -38,6 +38,14 @@ function Get-Architecture {
 
 }
 
+function Get-CPUCoreCount {
+
+    $CoreCount = (Get-WmiObject Win32_Processor).NumberOfCores
+    
+    return $CoreCount
+
+}
+
 function New-ExploitTable {
 
     # Create the table
@@ -388,38 +396,48 @@ function Find-MS16016 {
 function Find-MS16032 {
 
     $MSBulletin = "MS16-032"
-    $Architecture = Get-Architecture
+    
+    $CPUCount = Get-CPUCoreCount
 
-    if ( $Architecture[1] -eq "AMD64" -or $Architecture[0] -eq "32-bit" ) {
+    if ( $CPUCount -eq "1" ) {
 
-        $Path = $env:windir + "\system32\seclogon.dll"
+        $VulnStatus = "Not Supported on single-core systems"
+    
+    } Else {
+    
+        $Architecture = Get-Architecture
 
-    } ElseIf ( $Architecture[0] -eq "64-bit" -and $Architecture[1] -eq "x86" ) {
+        if ( $Architecture[1] -eq "AMD64" -or $Architecture[0] -eq "32-bit" ) {
 
-        $Path = $env:windir + "\sysnative\seclogon.dll"
+            $Path = $env:windir + "\system32\seclogon.dll"
 
-    } 
+        } ElseIf ( $Architecture[0] -eq "64-bit" -and $Architecture[1] -eq "x86" ) {
 
-        $VersionInfo = Get-FileVersionInfo($Path)
+            $Path = $env:windir + "\sysnative\seclogon.dll"
 
-        $VersionInfo = $VersionInfo.Split(".")
+        } 
 
-        $Build = [int]$VersionInfo[2]
-        $Revision = [int]$VersionInfo[3].Split(" ")[0]
+            $VersionInfo = Get-FileVersionInfo($Path)
 
-        switch ( $Build ) {
+            $VersionInfo = $VersionInfo.Split(".")
 
-            6002 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revison -lt 19598 -Or ( $Revision -ge 23000 -And $Revision -le 23909 ) ] }
-            7600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 19148 ] }
-            7601 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 19148 -Or ( $Revision -ge 23000 -And $Revision -le 23347 ) ] }
-            9200 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revison -lt 17649 -Or ( $Revision -ge 21000 -And $Revision -le 21767 ) ] }
-            9600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revison -lt 18230 ] }
-            10240 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 16724 ] }
-            10586 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 161 ] }
-            default { $VulnStatus = "Not Vulnerable" }
+            $Build = [int]$VersionInfo[2]
+            $Revision = [int]$VersionInfo[3].Split(" ")[0]
 
-        }
+            switch ( $Build ) {
 
+                6002 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revison -lt 19598 -Or ( $Revision -ge 23000 -And $Revision -le 23909 ) ] }
+                7600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 19148 ] }
+                7601 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 19148 -Or ( $Revision -ge 23000 -And $Revision -le 23347 ) ] }
+                9200 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revison -lt 17649 -Or ( $Revision -ge 21000 -And $Revision -le 21767 ) ] }
+                9600 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revison -lt 18230 ] }
+                10240 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -lt 16724 ] }
+                10586 { $VulnStatus = @("Not Vulnerable","Appears Vulnerable")[ $Revision -le 161 ] }
+                default { $VulnStatus = "Not Vulnerable" }
+
+            }
+    }
+    
     Set-ExploitTable $MSBulletin $VulnStatus
 
 }
