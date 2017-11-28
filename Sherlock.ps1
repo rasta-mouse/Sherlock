@@ -40,7 +40,7 @@ function Get-Architecture {
 
 function Get-CPUCoreCount {
 
-    $CoreCount = (Get-WmiObject Win32_Processor).NumberOfCores
+    $CoreCount = (Get-WmiObject Win32_Processor).NumberOfLogicalProcessors
     
     return $CoreCount
 
