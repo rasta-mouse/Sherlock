@@ -1,4 +1,4 @@
-﻿<#
+<#
 
     File: Sherlock.ps1
     Author: @_RastaMouse
