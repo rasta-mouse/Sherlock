@@ -19,7 +19,7 @@ function Get-FileVersionInfo ($FilePath) {
 
 function Get-InstalledSoftware($SoftwareName) {
 
-    $SoftwareVersion = Get-WmiObject -Class Win32_Product | Where { $_.Name -eq $SoftwareName } | Select-Object Version
+    $SoftwareVersion = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -eq $SoftwareName } | Select-Object Version
     $SoftwareVersion = $SoftwareVersion.Version  # I have no idea what I'm doing
     
     return $SoftwareVersion
@@ -84,7 +84,7 @@ function Set-ExploitTable ($MSBulletin, $VulnStatus) {
 
     if ( $MSBulletin -like "MS*" ) {
 
-        $Global:ExploitTable | Where { $_.MSBulletin -eq $MSBulletin
+        $Global:ExploitTable | Where-Object { $_.MSBulletin -eq $MSBulletin
 
         } | ForEach-Object {
 
@@ -95,7 +95,7 @@ function Set-ExploitTable ($MSBulletin, $VulnStatus) {
     } else {
 
 
-    $Global:ExploitTable | Where { $_.CVEID -eq $MSBulletin
+    $Global:ExploitTable | Where-Object { $_.CVEID -eq $MSBulletin
 
         } | ForEach-Object {
 
