@@ -13,6 +13,7 @@ PowerShell script to quickly find missing software patches for local privilege e
 * MS15-078 : Font Driver Buffer Overflow
 * MS16-016 : 'mrxdav.sys' WebDAV
 * MS16-032 : Secondary Logon Handle
+* MS16-034 : Windows Kernel-Mode Drivers EoP
 * MS16-135 : Win32k Elevation of Privilege
 * CVE-2017-7199 : Nessus Agent 6.6.2 - 6.10.3 Priv Esc
 
