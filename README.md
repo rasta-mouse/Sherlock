@@ -1,3 +1,5 @@
+> Deprecated.  Have a look at [Watson](https://github.com/rasta-mouse/Watson) instead.
+
 # Sherlock
 
 PowerShell script to quickly find missing software patches for local privilege escalation vulnerabilities.
