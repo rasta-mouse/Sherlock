@@ -37,9 +37,13 @@ function Get-FileVersionInfo ($FilePath) {
 
 function Get-InstalledSoftware($SoftwareName) {
 
+    if ( $(PSVersionTable.PSVersion.Major) -le "2" ) 
+    {
+    return $false
+    }
+
     $SoftwareVersion = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -eq $SoftwareName } | Select-Object Version
     $SoftwareVersion = $SoftwareVersion.Version  # I have no idea what I'm doing
-    
     return $SoftwareVersion
 
 }
